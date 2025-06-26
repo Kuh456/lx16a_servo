@@ -36,4 +36,3 @@
 #define LOBOT_SERVO_LED_CTRL_READ        34
 #define LOBOT_SERVO_LED_ERROR_WRITE      35
 #define LOBOT_SERVO_LED_ERROR_READ       36
-#define DE_PIN 5

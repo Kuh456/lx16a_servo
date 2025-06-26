@@ -141,22 +141,22 @@ int LobotSerialServoReadID(HardwareSerial &SerialX)
   return ret;
 }
 // 读取舵机位置(read servo position)
-int LobotSerialServoReadPosition(HardwareSerial &SerialX, uint8_t id)
+int LobotSerialServoReadPosition(HardwareSerial &SerialX, uint8_t id, int de_pin)
 {
   int count = 10000;
   int ret;
   byte buf[6];
-  pinMode(DE_PIN, OUTPUT);
+  pinMode(de_pin, OUTPUT);
   buf[0] = buf[1] = LOBOT_SERVO_FRAME_HEADER;
   buf[2] = id;
   buf[3] = 3;
   buf[4] = LOBOT_SERVO_POS_READ;
   buf[5] = LobotCheckSum(buf);
-  digitalWrite(DE_PIN, HIGH);
+  digitalWrite(de_pin, HIGH);
   SerialX.write(buf, 6);
   while (SerialX.available())
     SerialX.read();
-  digitalWrite(DE_PIN, LOW);
+  digitalWrite(de_pin, LOW);
   while (!SerialX.available())
   {
     count -= 1;
