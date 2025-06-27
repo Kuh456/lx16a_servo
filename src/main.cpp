@@ -2,7 +2,6 @@
 #include "include.h"
 #include "SerialServo.h"
 
-int speed = 700;
 int wait = 3000;
 int ServoID = 1;
 int pos = 0;
@@ -17,12 +16,12 @@ void setup()
 
 void loop()
 {
-
-  LobotSerialServoSetMode(Serial1, ServoID, 1, speed);
+  LobotSerialServoMove(Serial1, ServoID, 0, 1000);
   delay(wait);
-
-  LobotSerialServoSetMode(Serial1, ServoID, 1, 0); /// stop rotation
-  delay(1000);
   pos = LobotSerialServoReadPosition(Serial1, ServoID);
-  Serial.printf("%d\n", pos);
+  Serial.printf("Before: %d\n", pos);
+  LobotSerialServoMove(Serial1, ServoID, 1000, 1000);
+  delay(wait);
+  pos = LobotSerialServoReadPosition(Serial1, ServoID);
+  Serial.printf("After: %d\n", pos);
 }
