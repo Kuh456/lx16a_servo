@@ -1,6 +1,9 @@
+#ifndef SerialServo
+#define SerialServo
+#include <Arduino.h>
 #include "include.h"
 
-// 校验和(checksum)
+// checksum
 byte LobotCheckSum(byte buf[])
 {
   byte i;
@@ -14,7 +17,7 @@ byte LobotCheckSum(byte buf[])
   return i;
 }
 
-// 解析接收到的数据包信息，并返回(parse the received data packet information and return)
+// parse the received data packet information and return
 int LobotSerialServoReceiveHandle(HardwareSerial &SerialX, byte *ret)
 {
   bool frameStarted = false;
@@ -77,7 +80,7 @@ int LobotSerialServoReceiveHandle(HardwareSerial &SerialX, byte *ret)
     }
   }
 }
-// 写入舵机ID(write servo ID)
+// write servo ID
 void LobotSerialServoSetID(HardwareSerial &SerialX, uint8_t oldID, uint8_t newID)
 {
   byte buf[7];
@@ -90,7 +93,7 @@ void LobotSerialServoSetID(HardwareSerial &SerialX, uint8_t oldID, uint8_t newID
   SerialX.write(buf, 7);
 }
 
-// 控制舵机转动(servo rotation control)
+// servo rotation control
 void LobotSerialServoMove(HardwareSerial &SerialX, uint8_t id, int16_t position, uint16_t time)
 {
   byte buf[10];
@@ -107,10 +110,11 @@ void LobotSerialServoMove(HardwareSerial &SerialX, uint8_t id, int16_t position,
   buf[7] = GET_LOW_BYTE(time);
   buf[8] = GET_HIGH_BYTE(time);
   buf[9] = LobotCheckSum(buf);
+  digitalWrite(DE_PIN, HIGH);
   SerialX.write(buf, 10);
 }
 
-// 读取ID(read ID)
+// read ID
 int LobotSerialServoReadID(HardwareSerial &SerialX)
 {
   int count = 10000;
@@ -118,7 +122,7 @@ int LobotSerialServoReadID(HardwareSerial &SerialX)
   byte buf[6];
 
   buf[0] = buf[1] = LOBOT_SERVO_FRAME_HEADER;
-  buf[2] = ID_ALL; // ID_ALL为254，表示向所有舵机进行广播，可用于读取未知ID的舵机信息(ID_ALL is 254, which means a broadcast will be sent to all servos, which can be used to read information from servos with unknown IDs)
+  buf[2] = ID_ALL; // ID_ALL is 254, which means a broadcast will be sent to all servos, which can be used to read information from servos with unknown IDs
   buf[3] = 3;
   buf[4] = LOBOT_SERVO_ID_READ;
   buf[5] = LobotCheckSum(buf);
@@ -140,23 +144,23 @@ int LobotSerialServoReadID(HardwareSerial &SerialX)
     ret = -2048;
   return ret;
 }
-// 读取舵机位置(read servo position)
-int LobotSerialServoReadPosition(HardwareSerial &SerialX, uint8_t id, int de_pin)
+// read servo position
+int LobotSerialServoReadPosition(HardwareSerial &SerialX, uint8_t id)
 {
   int count = 10000;
   int ret;
   byte buf[6];
-  pinMode(de_pin, OUTPUT);
   buf[0] = buf[1] = LOBOT_SERVO_FRAME_HEADER;
   buf[2] = id;
   buf[3] = 3;
   buf[4] = LOBOT_SERVO_POS_READ;
   buf[5] = LobotCheckSum(buf);
-  digitalWrite(de_pin, HIGH);
+  digitalWrite(DE_PIN, HIGH);
   SerialX.write(buf, 6);
   while (SerialX.available())
     SerialX.read();
-  digitalWrite(de_pin, LOW);
+  SerialX.flush();
+  digitalWrite(DE_PIN, LOW);
   while (!SerialX.available())
   {
     count -= 1;
@@ -171,7 +175,7 @@ int LobotSerialServoReadPosition(HardwareSerial &SerialX, uint8_t id, int de_pin
   return ret;
 }
 
-// 读取偏差(read deviation)
+// read deviation
 int LobotSerialServoReadDev(HardwareSerial &SerialX, uint8_t id)
 {
   int count = 10000;
@@ -187,7 +191,6 @@ int LobotSerialServoReadDev(HardwareSerial &SerialX, uint8_t id)
 
   while (SerialX.available())
     SerialX.read();
-
   while (!SerialX.available())
   {
     count -= 1;
@@ -201,7 +204,8 @@ int LobotSerialServoReadDev(HardwareSerial &SerialX, uint8_t id)
     ret = -2048;
   return ret;
 }
-// 读取转动范围(read rotation range)
+
+// read rotation range
 int retL;
 int retH;
 int LobotSerialServoReadAngleRange(HardwareSerial &SerialX, uint8_t id)
@@ -236,7 +240,7 @@ int LobotSerialServoReadAngleRange(HardwareSerial &SerialX, uint8_t id)
     ret = -2048;
   return ret;
 }
-// 读取电压(read voltage)
+// read voltage
 int LobotSerialServoReadVin(HardwareSerial &SerialX, uint8_t id)
 {
   int count = 10000;
@@ -268,7 +272,7 @@ int LobotSerialServoReadVin(HardwareSerial &SerialX, uint8_t id)
   return ret;
 }
 
-// 读取电压范围(read voltage range)
+// read voltage range
 int vinL;
 int vinH;
 int LobotSerialServoReadVinLimit(HardwareSerial &SerialX, uint8_t id)
@@ -304,7 +308,7 @@ int LobotSerialServoReadVinLimit(HardwareSerial &SerialX, uint8_t id)
   return ret;
 }
 
-// 读取温度报警阈值(read temperature alarm threashold)
+// read temperature alarm threashold
 int LobotSerialServoReadTempLimit(HardwareSerial &SerialX, uint8_t id)
 {
   int count = 10000;
@@ -336,7 +340,7 @@ int LobotSerialServoReadTempLimit(HardwareSerial &SerialX, uint8_t id)
   return ret;
 }
 
-// 读取温度(read temperature)
+// read temperature
 int LobotSerialServoReadTemp(HardwareSerial &SerialX, uint8_t id)
 {
   int count = 10000;
@@ -368,7 +372,7 @@ int LobotSerialServoReadTemp(HardwareSerial &SerialX, uint8_t id)
   return ret;
 }
 
-// 读取舵机状态(read servo status)
+// read servo status
 int LobotSerialServoReadLoadOrUnload(HardwareSerial &SerialX, uint8_t id)
 {
   int count = 10000;
@@ -399,7 +403,7 @@ int LobotSerialServoReadLoadOrUnload(HardwareSerial &SerialX, uint8_t id)
 
   return ret;
 }
-// 停止转动(stop rotation)
+// stop rotation
 void LobotSerialServoStopMove(HardwareSerial &SerialX, uint8_t id)
 {
   byte buf[6];
@@ -410,7 +414,7 @@ void LobotSerialServoStopMove(HardwareSerial &SerialX, uint8_t id)
   buf[5] = LobotCheckSum(buf);
   SerialX.write(buf, 6);
 }
-// 设置舵机模式(set servo mode)
+// set servo mode
 void LobotSerialServoSetMode(HardwareSerial &SerialX, uint8_t id, uint8_t Mode, int16_t Speed)
 {
   byte buf[10];
@@ -424,11 +428,11 @@ void LobotSerialServoSetMode(HardwareSerial &SerialX, uint8_t id, uint8_t Mode, 
   buf[7] = GET_LOW_BYTE((uint16_t)Speed);
   buf[8] = GET_HIGH_BYTE((uint16_t)Speed);
   buf[9] = LobotCheckSum(buf);
-
+  digitalWrite(DE_PIN, HIGH);
   SerialX.write(buf, 10);
 }
 
-// 舵机上电(servo power-on)
+// servo power-on
 void LobotSerialServoLoad(HardwareSerial &SerialX, uint8_t id)
 {
   byte buf[7];
@@ -441,7 +445,7 @@ void LobotSerialServoLoad(HardwareSerial &SerialX, uint8_t id)
 
   SerialX.write(buf, 7);
 }
-// 舵机掉电(servo poweroff)
+// servo poweroff
 void LobotSerialServoUnload(HardwareSerial &SerialX, uint8_t id)
 {
   byte buf[7];
@@ -454,3 +458,8 @@ void LobotSerialServoUnload(HardwareSerial &SerialX, uint8_t id)
 
   SerialX.write(buf, 7);
 }
+// int LobotReadAngle(int position)
+// {
+//   return 
+// }
+#endif
