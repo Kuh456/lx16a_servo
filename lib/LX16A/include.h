@@ -39,5 +39,7 @@
 #define LOBOT_SERVO_LED_ERROR_WRITE 35
 #define LOBOT_SERVO_LED_ERROR_READ 36
 
+constexpr int wait = 3000;
+constexpr int ServoID = 1;
 constexpr int DE_PIN = 5;
 #endif

@@ -4,7 +4,7 @@
 #include "include.h"
 
 // checksum
-byte LobotCheckSum(byte buf[])
+byte CheckSum(byte buf[])
 {
   byte i;
   uint16_t temp = 0;
@@ -18,7 +18,7 @@ byte LobotCheckSum(byte buf[])
 }
 
 // parse the received data packet information and return
-int LobotSerialServoReceiveHandle(HardwareSerial &SerialX, byte *ret)
+int SerialServoReceiveHandle(HardwareSerial &SerialX, byte *ret)
 {
   bool frameStarted = false;
   bool receiveFinished = false;
@@ -68,7 +68,7 @@ int LobotSerialServoReceiveHandle(HardwareSerial &SerialX, byte *ret)
       if (dataCount == dataLength + 3)
       {
 
-        if (LobotCheckSum(recvBuf) == recvBuf[dataCount - 1])
+        if (CheckSum(recvBuf) == recvBuf[dataCount - 1])
         {
 
           frameStarted = false;
@@ -81,7 +81,7 @@ int LobotSerialServoReceiveHandle(HardwareSerial &SerialX, byte *ret)
   }
 }
 // write servo ID
-void LobotSerialServoSetID(HardwareSerial &SerialX, uint8_t oldID, uint8_t newID)
+void SerialServoSetID(HardwareSerial &SerialX, uint8_t oldID, uint8_t newID)
 {
   byte buf[7];
   buf[0] = buf[1] = LOBOT_SERVO_FRAME_HEADER;
@@ -89,12 +89,12 @@ void LobotSerialServoSetID(HardwareSerial &SerialX, uint8_t oldID, uint8_t newID
   buf[3] = 4;
   buf[4] = LOBOT_SERVO_ID_WRITE;
   buf[5] = newID;
-  buf[6] = LobotCheckSum(buf);
+  buf[6] = CheckSum(buf);
   SerialX.write(buf, 7);
 }
 
 // servo rotation control
-void LobotSerialServoMove(HardwareSerial &SerialX, uint8_t id, int16_t position, uint16_t time)
+void SerialServoMove(HardwareSerial &SerialX, uint8_t id, int16_t position, uint16_t time)
 {
   byte buf[10];
   if (position < 0)
@@ -109,13 +109,13 @@ void LobotSerialServoMove(HardwareSerial &SerialX, uint8_t id, int16_t position,
   buf[6] = GET_HIGH_BYTE(position);
   buf[7] = GET_LOW_BYTE(time);
   buf[8] = GET_HIGH_BYTE(time);
-  buf[9] = LobotCheckSum(buf);
+  buf[9] = CheckSum(buf);
   digitalWrite(DE_PIN, HIGH);
   SerialX.write(buf, 10);
 }
 
 // read ID
-int LobotSerialServoReadID(HardwareSerial &SerialX)
+int SerialServoReadID(HardwareSerial &SerialX)
 {
   int count = 10000;
   int ret;
@@ -125,7 +125,7 @@ int LobotSerialServoReadID(HardwareSerial &SerialX)
   buf[2] = ID_ALL; // ID_ALL is 254, which means a broadcast will be sent to all servos, which can be used to read information from servos with unknown IDs
   buf[3] = 3;
   buf[4] = LOBOT_SERVO_ID_READ;
-  buf[5] = LobotCheckSum(buf);
+  buf[5] = CheckSum(buf);
   SerialX.write(buf, 6);
 
   while (SerialX.available())
@@ -138,14 +138,14 @@ int LobotSerialServoReadID(HardwareSerial &SerialX)
       return -2048;
   }
 
-  if (LobotSerialServoReceiveHandle(SerialX, buf) > 0)
+  if (SerialServoReceiveHandle(SerialX, buf) > 0)
     ret = (int16_t)BYTE_TO_HW(0x00, buf[1]);
   else
     ret = -2048;
   return ret;
 }
 // read servo position
-int LobotSerialServoReadPosition(HardwareSerial &SerialX, uint8_t id)
+int SerialServoReadPosition(HardwareSerial &SerialX, uint8_t id)
 {
   int count = 10000;
   int ret;
@@ -154,7 +154,7 @@ int LobotSerialServoReadPosition(HardwareSerial &SerialX, uint8_t id)
   buf[2] = id;
   buf[3] = 3;
   buf[4] = LOBOT_SERVO_POS_READ;
-  buf[5] = LobotCheckSum(buf);
+  buf[5] = CheckSum(buf);
   digitalWrite(DE_PIN, HIGH);
   SerialX.write(buf, 6);
   while (SerialX.available())
@@ -168,7 +168,7 @@ int LobotSerialServoReadPosition(HardwareSerial &SerialX, uint8_t id)
       return -2048;
   }
 
-  if (LobotSerialServoReceiveHandle(SerialX, buf) > 0)
+  if (SerialServoReceiveHandle(SerialX, buf) > 0)
     ret = (int16_t)BYTE_TO_HW(buf[2], buf[1]);
   else
     ret = -2048;
@@ -176,7 +176,7 @@ int LobotSerialServoReadPosition(HardwareSerial &SerialX, uint8_t id)
 }
 
 // read deviation
-int LobotSerialServoReadDev(HardwareSerial &SerialX, uint8_t id)
+int SerialServoReadDev(HardwareSerial &SerialX, uint8_t id)
 {
   int count = 10000;
   int ret;
@@ -186,7 +186,7 @@ int LobotSerialServoReadDev(HardwareSerial &SerialX, uint8_t id)
   buf[2] = id;
   buf[3] = 3;
   buf[4] = LOBOT_SERVO_ANGLE_OFFSET_READ;
-  buf[5] = LobotCheckSum(buf);
+  buf[5] = CheckSum(buf);
   SerialX.write(buf, 6);
 
   while (SerialX.available())
@@ -198,7 +198,7 @@ int LobotSerialServoReadDev(HardwareSerial &SerialX, uint8_t id)
       return -2048;
   }
 
-  if (LobotSerialServoReceiveHandle(SerialX, buf) > 0)
+  if (SerialServoReceiveHandle(SerialX, buf) > 0)
     ret = (int16_t)BYTE_TO_HW(buf[2], buf[1]);
   else
     ret = -2048;
@@ -208,7 +208,7 @@ int LobotSerialServoReadDev(HardwareSerial &SerialX, uint8_t id)
 // read rotation range
 int retL;
 int retH;
-int LobotSerialServoReadAngleRange(HardwareSerial &SerialX, uint8_t id)
+int SerialServoReadAngleRange(HardwareSerial &SerialX, uint8_t id)
 {
   int count = 10000;
   int ret;
@@ -218,7 +218,7 @@ int LobotSerialServoReadAngleRange(HardwareSerial &SerialX, uint8_t id)
   buf[2] = id;
   buf[3] = 3;
   buf[4] = LOBOT_SERVO_ANGLE_LIMIT_READ;
-  buf[5] = LobotCheckSum(buf);
+  buf[5] = CheckSum(buf);
   SerialX.write(buf, 6);
 
   while (SerialX.available())
@@ -231,7 +231,7 @@ int LobotSerialServoReadAngleRange(HardwareSerial &SerialX, uint8_t id)
       return -2048;
   }
 
-  if (LobotSerialServoReceiveHandle(SerialX, buf) > 0)
+  if (SerialServoReceiveHandle(SerialX, buf) > 0)
   {
     retL = (int16_t)BYTE_TO_HW(buf[2], buf[1]);
     retH = (int16_t)BYTE_TO_HW(buf[4], buf[3]);
@@ -241,7 +241,7 @@ int LobotSerialServoReadAngleRange(HardwareSerial &SerialX, uint8_t id)
   return ret;
 }
 // read voltage
-int LobotSerialServoReadVin(HardwareSerial &SerialX, uint8_t id)
+int SerialServoReadVin(HardwareSerial &SerialX, uint8_t id)
 {
   int count = 10000;
   int ret;
@@ -251,7 +251,7 @@ int LobotSerialServoReadVin(HardwareSerial &SerialX, uint8_t id)
   buf[2] = id;
   buf[3] = 3;
   buf[4] = LOBOT_SERVO_VIN_READ;
-  buf[5] = LobotCheckSum(buf);
+  buf[5] = CheckSum(buf);
   SerialX.write(buf, 6);
 
   while (SerialX.available())
@@ -264,7 +264,7 @@ int LobotSerialServoReadVin(HardwareSerial &SerialX, uint8_t id)
       return -2048;
   }
 
-  if (LobotSerialServoReceiveHandle(SerialX, buf) > 0)
+  if (SerialServoReceiveHandle(SerialX, buf) > 0)
     ret = (int16_t)BYTE_TO_HW(buf[2], buf[1]);
   else
     ret = -2049;
@@ -275,7 +275,7 @@ int LobotSerialServoReadVin(HardwareSerial &SerialX, uint8_t id)
 // read voltage range
 int vinL;
 int vinH;
-int LobotSerialServoReadVinLimit(HardwareSerial &SerialX, uint8_t id)
+int SerialServoReadVinLimit(HardwareSerial &SerialX, uint8_t id)
 {
   int count = 10000;
   int ret;
@@ -285,7 +285,7 @@ int LobotSerialServoReadVinLimit(HardwareSerial &SerialX, uint8_t id)
   buf[2] = id;
   buf[3] = 3;
   buf[4] = LOBOT_SERVO_VIN_LIMIT_READ;
-  buf[5] = LobotCheckSum(buf);
+  buf[5] = CheckSum(buf);
   SerialX.write(buf, 6);
 
   while (SerialX.available())
@@ -298,7 +298,7 @@ int LobotSerialServoReadVinLimit(HardwareSerial &SerialX, uint8_t id)
       return -2048;
   }
 
-  if (LobotSerialServoReceiveHandle(SerialX, buf) > 0)
+  if (SerialServoReceiveHandle(SerialX, buf) > 0)
   {
     vinL = (int16_t)BYTE_TO_HW(buf[2], buf[1]);
     vinH = (int16_t)BYTE_TO_HW(buf[4], buf[3]);
@@ -309,7 +309,7 @@ int LobotSerialServoReadVinLimit(HardwareSerial &SerialX, uint8_t id)
 }
 
 // read temperature alarm threashold
-int LobotSerialServoReadTempLimit(HardwareSerial &SerialX, uint8_t id)
+int SerialServoReadTempLimit(HardwareSerial &SerialX, uint8_t id)
 {
   int count = 10000;
   int ret;
@@ -319,7 +319,7 @@ int LobotSerialServoReadTempLimit(HardwareSerial &SerialX, uint8_t id)
   buf[2] = id;
   buf[3] = 3;
   buf[4] = LOBOT_SERVO_TEMP_MAX_LIMIT_READ;
-  buf[5] = LobotCheckSum(buf);
+  buf[5] = CheckSum(buf);
   SerialX.write(buf, 6);
 
   while (SerialX.available())
@@ -332,7 +332,7 @@ int LobotSerialServoReadTempLimit(HardwareSerial &SerialX, uint8_t id)
       return -2048;
   }
 
-  if (LobotSerialServoReceiveHandle(SerialX, buf) > 0)
+  if (SerialServoReceiveHandle(SerialX, buf) > 0)
     ret = (int16_t)BYTE_TO_HW(0x00, buf[1]);
   else
     ret = -2049;
@@ -341,7 +341,7 @@ int LobotSerialServoReadTempLimit(HardwareSerial &SerialX, uint8_t id)
 }
 
 // read temperature
-int LobotSerialServoReadTemp(HardwareSerial &SerialX, uint8_t id)
+int SerialServoReadTemp(HardwareSerial &SerialX, uint8_t id)
 {
   int count = 10000;
   int ret;
@@ -351,7 +351,7 @@ int LobotSerialServoReadTemp(HardwareSerial &SerialX, uint8_t id)
   buf[2] = id;
   buf[3] = 3;
   buf[4] = LOBOT_SERVO_TEMP_READ;
-  buf[5] = LobotCheckSum(buf);
+  buf[5] = CheckSum(buf);
   SerialX.write(buf, 6);
 
   while (SerialX.available())
@@ -364,7 +364,7 @@ int LobotSerialServoReadTemp(HardwareSerial &SerialX, uint8_t id)
       return -2048;
   }
 
-  if (LobotSerialServoReceiveHandle(SerialX, buf) > 0)
+  if (SerialServoReceiveHandle(SerialX, buf) > 0)
     ret = (int16_t)BYTE_TO_HW(0x00, buf[1]);
   else
     ret = -2049;
@@ -373,7 +373,7 @@ int LobotSerialServoReadTemp(HardwareSerial &SerialX, uint8_t id)
 }
 
 // read servo status
-int LobotSerialServoReadLoadOrUnload(HardwareSerial &SerialX, uint8_t id)
+int SerialServoReadLoadOrUnload(HardwareSerial &SerialX, uint8_t id)
 {
   int count = 10000;
   int ret;
@@ -383,7 +383,7 @@ int LobotSerialServoReadLoadOrUnload(HardwareSerial &SerialX, uint8_t id)
   buf[2] = id;
   buf[3] = 3;
   buf[4] = LOBOT_SERVO_LOAD_OR_UNLOAD_READ;
-  buf[5] = LobotCheckSum(buf);
+  buf[5] = CheckSum(buf);
   SerialX.write(buf, 6);
 
   while (SerialX.available())
@@ -396,7 +396,7 @@ int LobotSerialServoReadLoadOrUnload(HardwareSerial &SerialX, uint8_t id)
       return -2048;
   }
 
-  if (LobotSerialServoReceiveHandle(SerialX, buf) > 0)
+  if (SerialServoReceiveHandle(SerialX, buf) > 0)
     ret = (int16_t)BYTE_TO_HW(0x00, buf[1]);
   else
     ret = -2049;
@@ -404,18 +404,18 @@ int LobotSerialServoReadLoadOrUnload(HardwareSerial &SerialX, uint8_t id)
   return ret;
 }
 // stop rotation
-void LobotSerialServoStopMove(HardwareSerial &SerialX, uint8_t id)
+void SerialServoStopMove(HardwareSerial &SerialX, uint8_t id)
 {
   byte buf[6];
   buf[0] = buf[1] = LOBOT_SERVO_FRAME_HEADER;
   buf[2] = id;
   buf[3] = 3;
   buf[4] = LOBOT_SERVO_MOVE_STOP;
-  buf[5] = LobotCheckSum(buf);
+  buf[5] = CheckSum(buf);
   SerialX.write(buf, 6);
 }
 // set servo mode
-void LobotSerialServoSetMode(HardwareSerial &SerialX, uint8_t id, uint8_t Mode, int16_t Speed)
+void SerialServoSetMode(HardwareSerial &SerialX, uint8_t id, uint8_t Mode, int16_t Speed)
 {
   byte buf[10];
 
@@ -427,13 +427,13 @@ void LobotSerialServoSetMode(HardwareSerial &SerialX, uint8_t id, uint8_t Mode, 
   buf[6] = 0;
   buf[7] = GET_LOW_BYTE((uint16_t)Speed);
   buf[8] = GET_HIGH_BYTE((uint16_t)Speed);
-  buf[9] = LobotCheckSum(buf);
+  buf[9] = CheckSum(buf);
   digitalWrite(DE_PIN, HIGH);
   SerialX.write(buf, 10);
 }
 
 // servo power-on
-void LobotSerialServoLoad(HardwareSerial &SerialX, uint8_t id)
+void SerialServoLoad(HardwareSerial &SerialX, uint8_t id)
 {
   byte buf[7];
   buf[0] = buf[1] = LOBOT_SERVO_FRAME_HEADER;
@@ -441,12 +441,12 @@ void LobotSerialServoLoad(HardwareSerial &SerialX, uint8_t id)
   buf[3] = 4;
   buf[4] = LOBOT_SERVO_LOAD_OR_UNLOAD_WRITE;
   buf[5] = 1;
-  buf[6] = LobotCheckSum(buf);
+  buf[6] = CheckSum(buf);
 
   SerialX.write(buf, 7);
 }
 // servo poweroff
-void LobotSerialServoUnload(HardwareSerial &SerialX, uint8_t id)
+void SerialServoUnload(HardwareSerial &SerialX, uint8_t id)
 {
   byte buf[7];
   buf[0] = buf[1] = LOBOT_SERVO_FRAME_HEADER;
@@ -454,11 +454,11 @@ void LobotSerialServoUnload(HardwareSerial &SerialX, uint8_t id)
   buf[3] = 4;
   buf[4] = LOBOT_SERVO_LOAD_OR_UNLOAD_WRITE;
   buf[5] = 0;
-  buf[6] = LobotCheckSum(buf);
+  buf[6] = CheckSum(buf);
 
   SerialX.write(buf, 7);
 }
-// int LobotReadAngle(int position)
+// int ReadAngle(int position)
 // {
 //   return 
 // }
